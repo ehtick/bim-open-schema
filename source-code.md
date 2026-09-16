@@ -1,140 +1,83 @@
 # Contributing to and Understanding the Code
 
-This repository contains the specification documents, and sample file. 
+This repository holds the BIM Open Schema specification, its C# reference
+implementation, and sample files. The specification is the code: the types in
+`src/Ara3D.BimOpenSchema` define the tables, columns, and enums that a `.bos`
+archive contains, and the version constant lives in `BimOpenSchema.cs`.
 
-Most of our open-source tools and libraries are maintained in the [Ara 3D SDK repository](https://github.com/ara3d/ara3d-sdk).
+## Code Organization
 
-## Code Organization  
-
-The [Ara 3D SDK](https://github.com/ara3d/ara3d-sdk) is a mono-repository for all of the open-source C# and Plato development done at [Ara 3D](https://ara3d.com). 
-
-Source code is split into two main areas:
-
-1. [`src`](https://github.com/ara3d/ara3d-sdk/tree/main/src) - core libraries, minimial dependencies, cross-platform, and .NET 8 compatible
-2. [`ext`](https://github.com/ara3d/ara3d-sdk/tree/main/ext) - additional libraries with platform dependencies (e.g., Windows specific) or 3rd party library dependencies (e.g., Autodesk Revit)
-
-## Core Library 
-
-The BIM Open Schema core library can be found at https://github.com/ara3d/ara3d-sdk/tree/main/src/Ara3D.BimOpenSchema . This library contains the:
-
-- data structures used for raw serialization
-- names and types of common Revit parameters
-- an object model representation for more convenient programmatic access
+| Project | What it holds |
+|---|---|
+| `src/Ara3D.BimOpenSchema` | The schema itself: the data records that serialize to Parquet, the names and types of common Revit parameters, and an object model for convenient programmatic access. |
+| `src/Ara3D.BimOpenSchema.IO` | Reading and writing `.bos` archives (Parquet in a zip), plus export to Excel, DuckDB, and BFAST. |
+| `src/Ara3D.BimOpenSchema.DuckDb` | Loading BOS data into DuckDB and querying it. |
+| `src/Ara3D.BimOpenSchema.Harmonizer` | Canonical names and units across models exported by different tools. |
+| `src/Ara3D.BimOpenSchema.DataModel` and `.DataModel.IO` | A relational, source-snapshot model built from BOS data, with validation and spatial indexing. |
+| `src/Ara3D.BimOpenSchema.BuildingModel*` | A higher-level building model with source mapping, workflows, and DuckDB projection. |
+| `tests/` | Unit tests for the DataModel and BuildingModel projects. Tests that convert IFC files into BOS live with the IFC code in [BIM Open Toolkit](https://github.com/ara3d/bim-open-toolkit). |
+| `examples/` | Sample `.bos` files generated from the Autodesk sample projects. |
 
 ## Code As Specification
 
-The official specification of the current version of BIM Open Schema are the following files 
+The official specification of the current version of BIM Open Schema is:
 
-- https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.BimOpenSchema/BimOpenSchema.cs
-- https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.BimOpenSchema/BimGeometry.cs
+- [src/Ara3D.BimOpenSchema/BimOpenSchema.cs](src/Ara3D.BimOpenSchema/BimOpenSchema.cs)
+- [src/Ara3D.BimOpenSchema/BimGeometry.cs](src/Ara3D.BimOpenSchema/BimGeometry.cs)
 
-Which are mirrored in this repository: 
+There is no separate copy to keep in sync. A change to the on-disk tables is a
+change to these files and to `Manifest.CurrentVersion`.
 
-- https://github.com/ara3d/bim-open-schema/blob/main/spec/BimOpenSchema.cs
-- https://github.com/ara3d/bim-open-schema/blob/main/spec/BimGeometry.cs
+## Building
 
-In the case of a discrepancy, please let us know via issues, but the former shall take precedence over the latter.  
+Requires the .NET 8 SDK.
 
-## Revit 2025 Exporter 
+```bash
+dotnet build BimOpenSchema.slnx
+dotnet test BimOpenSchema.slnx
+```
 
-The code for the Revit exporter can be found at: 
+Dependencies come from nuget.org except two: the `Platonic.Core` and
+`Platonic.Analyzers` packages used by the DataModel and BuildingModel projects
+come from a `Platonic.CSharp` checkout next to this repo (see `Platonic.props`),
+and the `Ara3D.*` packages track the version in `Directory.Build.props`.
 
-- [Revit 2025 Exporter](https://github.com/ara3d/ara3d-sdk/tree/main/ext/Ara3D.BimOpenSchema.Revit2025)
+When this repo is checked out as a submodule of a host repo, the host's
+`Directory.Build.props` and `nuget.config` take precedence, so package versions
+and feeds follow the host.
 
-It has a dependency on a library called: 
+Some tests read large sample models from a directory named by the
+`BOS_SAMPLE_DIRECTORY` environment variable and are skipped when it is unset.
 
-- [Ara3D.Bowerbird.Revit.Samples](https://github.com/ara3d/ara3d-sdk/tree/main/ext/Ara3D.Bowerbird.RevitSamples)
+## Related Code in Other Repositories
 
-This way it can be used from the [Bowerbird Revit plug-in](https://github.com/ara3d/ara3d-sdk/tree/main/ext/Ara3D.Bowerbird.Revit2025) as a script or from the Browser plug-in.   
-
-Two files in particular do the bulk of the work:
-
-- [BimOpenSchemaRevitBuilder.cs](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.Bowerbird.RevitSamples/BimOpenSchemaRevitBuilder.cs)
-- [MeshGatherer.cs](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.Bowerbird.RevitSamples/MeshGatherer.cs)
-
-## BIM Open Schema Browser 
-
-The BIM Open Schema Browser is a WPF application for Windows that present BOS data in a grid view. It provides various options for grouping the data, and 
-to export the data as GLB or Excel files.
-
-The source code can be found at: https://github.com/ara3d/ara3d-sdk/tree/main/ext/Ara3D.BimOpenSchema.Browser.
-
-## Dependencies and Helpers 
-
-There are several additional projects which are used together to facilitate the workflows:
-
-- [Ara3D.DataTable](https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.DataTable) - A high-performance alternative to System.Data, for working with in memory tabular data.  
-- [Ara3D.Models](https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.Models) - A library for representing collections of instanced meshes. 
-- [Ara3D.Geometry](https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.Geometry) - A library of geometry and math routines 
-- [Ara3D.Extra](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.Extras) - A grab-bag of external dependencies, in this case used for Parquet loading, writing, and parsing
-- [Ara3D.BimOpenSchema.IO](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.BimOpenSchema.IO) - Additional libraries for reading/writing and transforming BIM OpenSchema (e.g., to Excel)
-
+- [Revit 2025 Exporter](https://github.com/ara3d/ara3d-sdk/tree/main/ext/Ara3D.BimOpenSchema.Revit2025) in the Ara 3D SDK, built on [Ara3D.Bowerbird.Revit.Samples](https://github.com/ara3d/ara3d-sdk/tree/main/ext/Ara3D.Bowerbird.RevitSamples). The files that do the bulk of the work are `BimOpenSchemaRevitBuilder.cs` and `MeshGatherer.cs`.
+- [BIM Open Schema Browser](https://github.com/ara3d/ara3d-sdk/tree/main/apps/Ara3D.BimOpenSchema.Browser), a WPF grid viewer with GLB and Excel export.
+- [Ara3D.DataTable](https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.DataTable), [Ara3D.Models](https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.Models), and [Ara3D.Geometry](https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.Geometry), the general-purpose libraries this code depends on.
+- [BIM Open Toolkit](https://github.com/ara3d/bim-open-toolkit), which converts IFC files to BOS and runs analyses over the result.
 
 # Coding FAQ
 
-The following are some common programming tasks and questions. 
+## Where is the "Load" or "Read" Function for a .BOS file?
 
-## Where is the "Load" or "Read" Function for a .BOS file?  
+`ReadParquetFromZip` and `ReadBimGeometryFromParquetZipAsync` in
+`src/Ara3D.BimOpenSchema.IO/ParquetUtils.cs`. A `.bos` file is a zip of Parquet
+tables, one per record type in the schema.
 
-The main function is called `ReadBimDataFromParquetZipAsync` and can be found in [`ext/Ara3D.Extras/ParquetUtils.cs`](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.Extras/ParquetUtils.cs). 
+## Where is the "Save" or "Write" Function for a .BOS file?
 
-An example of the usage can be found in [`ext/Ara3D.Bowerbird.RevitSamples/CommandForegroundExportBos.cs`](https://github.com/ara3d/ara3d-sdk/blob/main/src/ext/Ara3D.BimOpenSchema.Browser/MainWindow.xaml.cs): 
+`WriteParquetToZip` in the same file. Build an `IBimData` with `BimDataBuilder`,
+convert it to a data set, then write it.
 
-```
-public async Task OpenFile(FilePath fp)
-{
-    if (!fp.Exists())
-        return;
-    using var waitContext = new WpfWaitContext();
+## How do I add a new parameter to export from Revit?
 
-    Model3D = null;
-    CurrentFile = fp;
-    Data = await fp.ReadBimDataFromParquetZipAsync().ConfigureAwait(false);
-    Model3D = BimModel3D.Create(Data);
-    await UpdateTables();
-}
-```
-
-## Where is the "Save" or "Write" Function for a .BOS file?  
-
-The main function is called `ExportBimOpenSchema` and can be found in [`ext/Ara3D.Bowerbird.RevitSamples/BimOpenSchemaUtils.cs`](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.Bowerbird.RevitSamples/BimOpenSchemaUtils.cs#L71):
-
-An example of the usage can be found in [`ext/Ara3D.Bowerbird.RevitSamples/CommandForegroundExportBos.cs`](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.Bowerbird.RevitSamples/CommandForegroundExportBos.cs): 
-
-```
-public class CommandForegroundExportBos : NamedCommand
-{
-    public override string Name => "BOM Export";
-
-    public BimOpenSchemaExportSettings GetExportSettings()
-        => new()
-        {
-            Folder = BimOpenSchemaExportSettings.DefaultFolder,
-            IncludeLinks = true,
-            IncludeGeometry = true
-        };
-
-    public override void Execute(object arg)
-    {
-        var uiapp = arg as UIApplication;
-        var doc = uiapp?.ActiveUIDocument?.Document;
-        var sb = new StringBuilder();
-        var logger = Logger.Create(sb);
-        doc?.ExportBimOpenSchema(GetExportSettings(), logger);
-        TextDisplayForm.DisplayText(sb.ToString());
-    }
-}
-```
-
-## How do I add a new parameter to export from Revit? 
-
-Follow the pattern of the Revit parameter list in [`src/Ara3D.BimOpenSchema/CommonRevitParameters.cs`](https://github.com/ara3d/ara3d-sdk/blob/main/src/Ara3D.BimOpenSchema/CommonRevitParameters.cs) to add a new parameter name and type definition.
-
-Depending on the type of the data it resides in, find the appropriate location in the file [`ext/Ara3D.Bowerbird.RevitSamples/BimOpenSchemaRevitBuilder.cs`](https://github.com/ara3d/ara3d-sdk/blob/main/ext/Ara3D.Bowerbird.RevitSamples/BimOpenSchemaRevitBuilder.cs) file
-to compute the data and add it. If the data can throw an exception, make sure you apply the appropriate checks or `try`/`catch` block. 
+Follow the pattern in [src/Ara3D.BimOpenSchema/CommonRevitParameters.cs](src/Ara3D.BimOpenSchema/CommonRevitParameters.cs)
+to add the parameter name and type. Then add the code that reads it from the
+Revit document in `BimOpenSchemaRevitBuilder.cs` in the Ara 3D SDK. If reading
+the value can throw, guard it.
 
 # Contributions
 
-Contribution are welcome, if they conform to the style and design philosophy established by the pre-existing code. 
-Most contributions would be made to the [Ara 3D SDK repository](https://github.com/ara3d/ara3d-sdk). 
-If you have questions or suggestions feel free to [submit an issue](https://github.com/ara3d/bim-open-schema/issues).
+Contributions are welcome if they conform to the style and design of the
+existing code. Open an [issue](https://github.com/ara3d/bim-open-schema/issues)
+with questions or suggestions.

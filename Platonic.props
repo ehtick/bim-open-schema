@@ -1,0 +1,26 @@
+<Project>
+  <!--
+    Platonic.Core (Result, Option, Unit, boundary attributes) and the Platonic
+    analyzers, applied as errors. The 0.1.0 packages are not on nuget.org; they
+    come from a Platonic.CSharp checkout's artifacts folder. That checkout is a
+    sibling of this repo when standalone, and a sibling of the host repo when
+    this repo is a submodule. Override PlatonicRoot to point elsewhere.
+  -->
+  <PropertyGroup>
+    <PlatonicVersion Condition="'$(PlatonicVersion)' == ''">0.1.0</PlatonicVersion>
+    <_PlatonicSibling>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Platonic.CSharp'))</_PlatonicSibling>
+    <_PlatonicHostSibling>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..\Platonic.CSharp'))</_PlatonicHostSibling>
+    <PlatonicRoot Condition="'$(PlatonicRoot)' == '' And Exists('$(_PlatonicSibling)/artifacts')">$(_PlatonicSibling)</PlatonicRoot>
+    <PlatonicRoot Condition="'$(PlatonicRoot)' == '' And Exists('$(_PlatonicHostSibling)/artifacts')">$(_PlatonicHostSibling)</PlatonicRoot>
+    <RestoreAdditionalProjectSources Condition="'$(PlatonicRoot)' != ''">$(RestoreAdditionalProjectSources);$(PlatonicRoot)/artifacts</RestoreAdditionalProjectSources>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Platonic.Core" Version="$(PlatonicVersion)" />
+    <PackageReference Include="Platonic.Analyzers" Version="$(PlatonicVersion)" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

@@ -1,5 +1,4 @@
 ﻿using Ara3D.Models;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,7 +12,7 @@ namespace Ara3D.BimOpenSchema
     public class BimObjectModel
     {
         public IBimData Data;
-        public BimGeometry Geometry => Data.Geometry;
+        public IModel3D Model3D;
 
         private bool _parametersComputed;
 
@@ -21,9 +20,17 @@ namespace Ara3D.BimOpenSchema
         public List<EntityModel> Entities { get; } = new();
         public List<DescriptorModel> Descriptors { get; } = new();
 
+        public HashSet<EntityIndex> TypeEntityIndices { get; } = new();
+        public HashSet<EntityIndex> CategoryEntityIndices { get; } = new();
+
         public BimObjectModel(IBimData data, bool computeParametersAndRelations)
-        {
+            : this(data, data.Geometry.ToModel3D(), computeParametersAndRelations)
+        { }
+
+        public BimObjectModel(IBimData data, IModel3D model, bool computeParametersAndRelations)
+        {   
             Data = data;
+            Model3D = model;
 
             foreach (var d in data.Documents)
                 Documents.Add(new DocumentModel
@@ -32,22 +39,32 @@ namespace Ara3D.BimOpenSchema
                     Title = Get(d.Title)
                 });
 
+            foreach (var e in Data.Entities)
+            {
+                if (e.Type >= 0)
+                    TypeEntityIndices.Add(e.Type);
+                if (e.Category >= 0)
+                    CategoryEntityIndices.Add(e.Category);
+            }
+
             Entities = data.
                 EntityIndices().Select(Create).ToList();
             
             if (Entities.Count > 0)
             {
-                var numElements = Geometry.GetNumInstances();
+                var numElements = Model3D.Instances.Count;
                 for (var i = 0; i < numElements; i++)
                 {
-                    var inst = Geometry.GetInstanceStruct(i);
+                    var inst = Model3D.Instances[i];
                     var entityIndex = inst.EntityIndex;
                     if (entityIndex >= 0)
                     {
-                        Entities[entityIndex]?.Instances.Add(inst);
+                        Entities[entityIndex]?.AddInstance(inst);
                     }
                 }
             }
+
+            Descriptors.AddRange(Data.DescriptorIndices().Select(di => Create(di, Data.Get(di) ?? default)));
 
             if (computeParametersAndRelations)
                 ComputeParametersAndRelations();
@@ -58,8 +75,6 @@ namespace Ara3D.BimOpenSchema
             // This is probably a mistake 
             Debug.Assert(!_parametersComputed);
             _parametersComputed = true;
-
-            Descriptors.AddRange(Data.DescriptorIndices().Select(di => Create(di,Data.Get(di))));
 
             foreach (var p in Data.Parameters)
                 AddParameter(p.Entity, Create(p));
@@ -76,7 +91,7 @@ namespace Ara3D.BimOpenSchema
         }
 
         public EntityModel Create(EntityIndex ei)
-            => new(this, ei);
+            => new(this, ei, TypeEntityIndices.Contains(ei), CategoryEntityIndices.Contains(ei));
 
         public DescriptorModel Create(DescriptorIndex index, ParameterDescriptor desc) => new DescriptorModel
         {
@@ -89,44 +104,62 @@ namespace Ara3D.BimOpenSchema
 
         public EntityModel Get(EntityIndex ei) => ei < 0 ? null : Entities[(int)ei];
         public DescriptorModel Get(DescriptorIndex di) => di < 0 ? null : Descriptors[(int)di];
-        public Point Get(PointIndex pi) => pi < 0 ? new Point(0,0,0) : Data.Get(pi);
-        public string Get(StringIndex si) => si < 0 ? "" : Data.Get(si);
-        public float Get(NumberIndex ni) => ni < 0 ? 0 : Data.Get(ni);
+        public Point Get(PointIndex pi) => Data.Get(pi);
+        public string Get(StringIndex si) => Data.Get(si);
+        public float Get(NumberIndex ni) => Data.Get(ni);
 
         public void AddParameter(EntityIndex ei, ParameterModel pm)
         {
             var e = Get(ei);
-            e.ParameterValues[pm.Descriptor.Name] = GetParameterValue(pm);
+            e.ParameterValues[pm.Descriptor.Name] = pm.Value;
             e.Parameters.Add(pm);
         }
 
-        public object GetParameterValue(ParameterModel pm)
+        public object GetParameterValue(Parameter p)
+            => GetParameterValue(Get(p.Descriptor).ParameterType, p.Value);
+        
+        public object GetParameterValue(ParameterType pt, int value)
         {
-            return pm.Descriptor.ParameterType switch
+            return pt switch
             {
-                ParameterType.Int => pm.IntegerValue,
-                ParameterType.String => Get((StringIndex)pm.IntegerValue),
-                ParameterType.Number => Get((NumberIndex)pm.IntegerValue),
-                ParameterType.Entity => Get((EntityIndex)pm.IntegerValue),
-                ParameterType.Point => Get((PointIndex)pm.IntegerValue).ToString(),
+                ParameterType.Int => value,
+                ParameterType.String => Get((StringIndex)value),
+                ParameterType.Number => Get((NumberIndex)value),
+                ParameterType.Entity => Get((EntityIndex)value),
+                ParameterType.Point => Get((PointIndex)value).ToString(),
                 _ => null
             };
         }
 
+
         public ParameterModel Create(Parameter p) 
-            => new(p.Value, Get(p.Descriptor));
+            => new(GetParameterValue(p), Get(p.Entity), Get(p.Descriptor));
     }
 
     public class EntityModel
     {
+        public EntityModel(BimObjectModel model, EntityIndex ei, bool isType, bool isCategory)
+        {
+            Model = model;
+            Index = ei;
+            IsType = isType;
+            IsCategory = isCategory;
+        }
+
         // Stored data
         public BimObjectModel Model { get;  }
         public EntityIndex Index { get; }
+        
+        public bool IsType { get; }
+        public bool IsCategory { get; }
+        public bool IsTypeInstance => HasType;
+        public bool IsNotTypeOrCategory => !IsType && !IsCategory;
+
         public List<InstanceStruct> Instances { get; } = new();
 
         // Always accessible data 
         public IBimData Data => Model.Data;
-        public Entity Entity => Model.Data.Get(Index);
+        public Entity Entity => Model.Data.Get(Index) ?? default;
         public DocumentModel Document => Model.Documents.ElementAtOrDefault((int)Entity.Document);
         public string DocumentTitle => Document?.Title;
         public long LocalId => Entity.LocalId;
@@ -135,6 +168,7 @@ namespace Ara3D.BimOpenSchema
         public string BuiltInCategory => GetEntityModel(Entity.Category)?.GetParameterAsString(CommonRevitParameters.CategoryBuiltInType);
         public string Name => Data.Get(Entity.Name);
         public bool HasGeometry => Instances.Count > 0;
+        public bool HasType => Entity.Type >= 0;
 
         public EntityModel GetEntityModel(EntityIndex ei)
             => ei < 0 ? null : Model.Entities[(int)ei];
@@ -147,16 +181,11 @@ namespace Ara3D.BimOpenSchema
         public string AssemblyName => GetParameterAsEntity(CommonRevitParameters.ElementAssemblyInstance)?.Index.ToString();
         public int WorksetId => GetParameterAsInt(CommonRevitParameters.ElementWorksetId);
         public float Elevation => GetParameterAsEntity(CommonRevitParameters.ElementLevel)?.GetParameterAsNumber(CommonRevitParameters.LevelElevation) ?? 0;
-        public string Type => GetEntityModel(Entity.Type)?.Name;
+        public string TypeName => Type?.Name ?? "";
+        public EntityModel Type => GetEntityModel(Entity.Type);
 
         // Family instance parameters
         public string RoomName => GetParameterAsEntity(CommonRevitParameters.FISpace)?.Name;
-
-        public EntityModel(BimObjectModel model, EntityIndex ei)
-        {
-            Model = model;
-            Index = ei;
-        }
 
         public Dictionary<string, object> ParameterValues { get; } = new();
         public List<RelationModel> OutgoingRelations { get; } = new();
@@ -177,6 +206,11 @@ namespace Ara3D.BimOpenSchema
 
         public EntityModel GetParameterAsEntity(string name)
             => ParameterValues.GetValueOrDefault(name) as EntityModel;
+
+        public void AddInstance(InstanceStruct inst)
+        {
+            Instances.Add(inst);
+        }
     }
 
     public class RelationModel
@@ -193,17 +227,19 @@ namespace Ara3D.BimOpenSchema
 
     public class ParameterModel
     {
-        public int IntegerValue { get; }
+        public object Value { get; }
+        public EntityModel Entity { get; }
         public DescriptorModel Descriptor { get; }
         
-        public ParameterModel(int value, DescriptorModel descriptor)
+        public ParameterModel(object value, EntityModel entity, DescriptorModel descriptor)
         {
-            IntegerValue = value;
+            Value = value;
+            Entity = entity;
             Descriptor = descriptor;
         }
 
         public override string ToString()
-            => $"{Descriptor.Name} ({Descriptor.ParameterType}) = {IntegerValue}";
+            => $"{Descriptor.Name} ({Descriptor.ParameterType}) = {Value}";
     }
 
     public class DocumentModel

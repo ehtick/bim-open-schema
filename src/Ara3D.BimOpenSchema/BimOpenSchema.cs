@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Ara3D.BimOpenSchema;
+﻿namespace Ara3D.BimOpenSchema;
 
 /// <summary>
 /// Contains all the BIM Data for a discipline or federated model.
@@ -27,15 +25,15 @@ namespace Ara3D.BimOpenSchema;
 public interface IBimData
 {
     Manifest Manifest { get; }
-    IReadOnlyList<ParameterDescriptor> Descriptors { get; } 
-    IReadOnlyList<Parameter> Parameters { get; } 
-    IReadOnlyList<Document> Documents { get; } 
-    IReadOnlyList<Entity> Entities { get; } 
-    IReadOnlyList<string> Strings { get; }
-    IReadOnlyList<float> Numbers { get; }
-    IReadOnlyList<Point> Points { get; } 
-    IReadOnlyList<EntityRelation> Relations { get; }
-    IReadOnlyList<Diagnostic> Diagnostics { get; }
+    ParameterDescriptor[] Descriptors { get; } 
+    Parameter[] Parameters { get; } 
+    Document[] Documents { get; } 
+    Entity[] Entities { get; } 
+    string[] Strings { get; }
+    float[] Numbers { get; }
+    Point[] Points { get; } 
+    EntityRelation[] Relations { get; }
+    Diagnostic[] Diagnostics { get; }
     BimGeometry Geometry { get; }
 }
 
@@ -114,11 +112,14 @@ public record struct Point
 /// <summary>
 /// Important for grouping the different kinds of parameter data ...
 /// otherwise we can have two parameter with the same name, but different underlying parameter types.
+/// Booleans are stored as Int.
+/// Values must stay contiguous from zero with no aliases: the SDK's ToDataTable encodes enums
+/// by position in Enum.GetValues, and parquet readers cast the stored codes numerically —
+/// an alias or gap makes the two disagree.
 /// </summary>
 public enum ParameterType
 {
-    Int = 0, 
-    Bool = Int, 
+    Int = 0,
     Number = 1,
     Entity = 2,
     String = 3,
