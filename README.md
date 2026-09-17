@@ -12,10 +12,12 @@ The official release comes with an exporter for Revit 2025 and Ara 3D Studio for
 
 This repository provides:
 
-1. [Official specification](src/Ara3D.BimOpenSchema) - the C# types that define the tables, in the same project that reads and writes them.
-2. [Reference implementation](src) - C# libraries for reading, writing, querying, and modelling BOS data. See [source-code.md](source-code.md).
-3. [Sample test files](examples) - generated from the Autodesk sample files.
-4. [BIM Open Schema Exporter](https://github.com/ara3d/bim-open-schema/releases) - an exporter for Revit 2025 bundled with Ara 3D Studio. 
+1. [Official specification](src/Ara3D.BimOpenSchema) - the C# types that define the tables, columns, enums, and manifest. The project has no dependencies. See [source-code.md](source-code.md).
+2. [Sample test files](examples) - generated from the Autodesk sample files.
+3. [BIM Open Schema Exporter](https://github.com/ara3d/bim-open-schema/releases) - an exporter for Revit 2025 bundled with Ara 3D Studio.
+
+The C# reference implementation (reading, writing, querying, converting from IFC and Revit) lives in
+[BIM Open Toolkit](https://github.com/ara3d/bim-open-toolkit).
 
 https://github.com/user-attachments/assets/a02ae405-e3a1-484f-8f09-8601dbe5db72
 
@@ -23,10 +25,10 @@ https://github.com/user-attachments/assets/a02ae405-e3a1-484f-8f09-8601dbe5db72
 
 BIM Open Schema comes with an ecosystem of open-source tools in other repositories for 
 
-- [Reading and querying BIM Open Schema (.BOS) files](src/Ara3D.BimOpenSchema.IO) and [loading them into DuckDB](src/Ara3D.BimOpenSchema.DuckDb), in this repository
+- [Reading and querying BIM Open Schema (.BOS) files](https://github.com/ara3d/bim-open-toolkit/tree/main/src/Ara3D.BimOpenSchema.IO) and [loading them into DuckDB](https://github.com/ara3d/bim-open-toolkit/tree/main/src/Ara3D.BimOpenSchema.DuckDb) with BIM Open Toolkit
 - [Converting IFC files to BOS and analysing them](https://github.com/ara3d/bim-open-toolkit) with BIM Open Toolkit
-- [Exporting BOS files from Revit](https://github.com/ara3d/ara3d-sdk/tree/main/ext/Ara3D.BIMOpenSchema.Revit2025)
-- [Displaying BOS data in WPF Datagrid controls](https://github.com/ara3d/ara3d-sdk/tree/main/apps/Ara3D.BimOpenSchema.Browser) along with exporting to GLTF and Excel files
+- [Exporting BOS files from Revit](https://github.com/ara3d/bim-open-toolkit/tree/main/plugins/Ara3D.BIMOpenSchema.Revit2025)
+- [Displaying BOS data in WPF Datagrid controls](https://github.com/ara3d/bim-open-toolkit/tree/main/apps/Ara3D.BimOpenSchema.Browser) along with exporting to GLTF and Excel files
 - [Loading, Viewing, and Querying BOS files in the browser](https://github.com/ara3d/ara3d-webgl)
 - [Querying BOS data in the browser via DuckDB](https://bim-open-schema-reader.vercel.app)
 
@@ -86,9 +88,11 @@ The contents of the .bos archive are the following parquet files:
 
 ## Show me the Code
 
-The C# reference implementation lives in this repository under [`src`](src), with tests under [`tests`](tests).
+The specification itself is the C# project under [`src`](src). See [source-code.md](source-code.md)
+for what each file defines, how to build it, and how to change a table.
 
-See [source-code.md](source-code.md) to learn how it is structured, how to build it, and how to contribute to it. 
+The C# reference implementation, with its tests, lives in
+[BIM Open Toolkit](https://github.com/ara3d/bim-open-toolkit).
 
 ## Contributors and Supporters
 

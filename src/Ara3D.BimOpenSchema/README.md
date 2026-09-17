@@ -1,44 +1,32 @@
 # Ara3D.BimOpenSchema
 
-Object model for **BIM Open Schema (BOS)** — a standardized, column-oriented representation of
-Building Information Modeling data.
+The **BIM Open Schema (BOS)** specification as C# types: a column-oriented
+representation of Building Information Modeling data.
 
-## Overview
+BOS expresses federated BIM data as a set of tables (entities, parameters,
+relations, geometry, and shared string, number, and point pools). It is
+optimized for compact storage and fast loading into analytical tools (Parquet
+files, DuckDB, or in-memory workflows), not for ad-hoc querying.
 
-BOS expresses federated BIM data as a set of tables (entities, parameters, relations, geometry,
-and shared string/number pools). It is optimized for compact storage and fast loading into
-analytical tools (Parquet files, DuckDB, or in-memory C# workflows), not for ad-hoc querying.
-
-A typical workflow is to ingest BOS into DuckDB and build denormalized views with SQL for a
-specific use case.
-
-Serialization to disk is provided by [`Ara3D.BimOpenSchema.IO`](../Ara3D.BimOpenSchema.IO).
-Included in the [`Ara3D.SDK.IO`](../Ara3D.SDK.IO) and [`Ara3D.SDK`](../Ara3D.SDK) meta-packages.
-
-Current schema version: **0.3** (`Manifest.CurrentVersion`).
+This package has no dependencies. It contains the record types, enums, and
+constants that define the tables, and nothing else. The version is
+`Manifest.CurrentVersion`.
 
 ## Key types
 
-- `IBimData` — root data container (manifest, descriptors, entities, geometry, …)
-- `Manifest` — version, generator application, export options
-- `Entity`, `Parameter`, `ParameterDescriptor` — BIM elements and their properties
-- `EntityRelation` — relationships between entities
-- `BimGeometry`, `BimGeometryBuilder` — tessellated geometry linked to entities
-- `BimDataBuilder` — construct `IBimData` in memory
+- `IBimData` and `BimData`: the root container, one array per table
+- `Manifest`: version, generator application, export options
+- `Entity`, `Parameter`, `ParameterDescriptor`: BIM elements and their properties
+- `EntityRelation`: relationships between entities
+- `BimGeometry`: tessellated geometry linked to entities, as flat columns
+- `CommonRevitParameters`: the canonical parameter names an exporter writes
 
-## Dependencies
+## Working with the data
 
-- [Ara3D.DataTable](../Ara3D.DataTable)
-- [Ara3D.Geometry](../Ara3D.Geometry)
-- [Ara3D.Models](../Ara3D.Models)
-
-## Related projects
-
-- [Ara3D.IO.VIM](../Ara3D.IO.VIM) — VIM binary BIM format
-- [Ara3D.DataTable](../Ara3D.DataTable) — columnar data interfaces
+Builders, accessors, serialization, and the IFC and Revit converters live in
+[BIM Open Toolkit](https://github.com/ara3d/bim-open-toolkit), starting with
+`Ara3D.BimOpenSchema.ObjectModel` and `Ara3D.BimOpenSchema.IO`.
 
 ## License
 
-MIT — see [LICENSE](../../LICENSE).
-
-Provenance: copied from ara3d/ara3d-sdk `src/Ara3D.BimOpenSchema` @ 82df7322.
+MIT, see [LICENSE](../../LICENSE).

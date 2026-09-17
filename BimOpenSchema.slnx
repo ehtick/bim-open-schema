@@ -1,20 +1,3 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Ara3D.BimOpenSchema.BuildingModel.DuckDb/Ara3D.BimOpenSchema.BuildingModel.DuckDb.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.BuildingModel.Source/Ara3D.BimOpenSchema.BuildingModel.Source.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.BuildingModel.Workflows.IO/Ara3D.BimOpenSchema.BuildingModel.Workflows.IO.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.BuildingModel.Workflows/Ara3D.BimOpenSchema.BuildingModel.Workflows.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.BuildingModel/Ara3D.BimOpenSchema.BuildingModel.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.DataModel.IO/Ara3D.BimOpenSchema.DataModel.IO.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.DataModel/Ara3D.BimOpenSchema.DataModel.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.DuckDb/Ara3D.BimOpenSchema.DuckDb.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.Harmonizer/Ara3D.BimOpenSchema.Harmonizer.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema.IO/Ara3D.BimOpenSchema.IO.csproj" />
-    <Project Path="src/Ara3D.BimOpenSchema/Ara3D.BimOpenSchema.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Ara3D.BimOpenSchema.BuildingModel.Tests/Ara3D.BimOpenSchema.BuildingModel.Tests.csproj" />
-    <Project Path="tests/Ara3D.BimOpenSchema.BuildingModel.Workflows.Tests/Ara3D.BimOpenSchema.BuildingModel.Workflows.Tests.csproj" />
-    <Project Path="tests/Ara3D.BimOpenSchema.DataModel.Tests/Ara3D.BimOpenSchema.DataModel.Tests.csproj" />
-  </Folder>
+  <Project Path="src/Ara3D.BimOpenSchema/Ara3D.BimOpenSchema.csproj" />
 </Solution>

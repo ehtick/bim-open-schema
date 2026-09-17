@@ -1,13 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <Description>The BIM Open Schema specification as C# types: the tables, columns, enums, and manifest of a .bos archive.</Description>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Ara3D.DataTable" Version="$(Ara3DSdkVersion)" />
-    <PackageReference Include="Ara3D.Geometry" Version="$(Ara3DSdkVersion)" />
-    <PackageReference Include="Ara3D.Models" Version="$(Ara3DSdkVersion)" />
-  </ItemGroup>
 
 </Project>
